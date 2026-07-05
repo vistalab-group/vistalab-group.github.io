@@ -706,8 +706,12 @@
         btn.classList.toggle('active', btn.getAttribute('data-view') === id);
       });
 
-      // Update hash for bookmarkability
-      history.replaceState(null, '', '#' + id);
+      // Update hash for bookmarkability — keep the URL clean (no "#home") on the home view
+      if (id === 'home') {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      } else {
+        history.replaceState(null, '', '#' + id);
+      }
 
       // Close mobile menu
       var nav = document.getElementById('nav-links');
