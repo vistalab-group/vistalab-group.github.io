@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VISTA Lab | Utah State University</title>
+  <meta name="description" content="VISTA Lab — Visual Intelligence Systems for Trustworthy AI, directed by Dr. Hossein Kashiani at Utah State University.">
+  <link rel="icon" type="image/png" href="Doc/icon.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <style>
+    /* ============================================================
+       Design tokens
+       ============================================================ */
+    :root {
+      --navy:        #1a2e5a;
+      --navy-light:  #2a4080;
+      --accent:      #1772d0;
+      --accent-dark: #115a9e;
+      --text:        #2d3748;
+      --text-light:  #4a5568;
+      --muted:       #718096;
+      --border:      #e2e8f0;
+      --card-bg:     #f8fafc;
+      --bg:          #ffffff;
+      --nav-height:  66px;
+      --max-width:   1160px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--accent-dark); text-decoration: underline; }
+    p { margin: 0 0 1em; }
+
+    /* ============================================================
+       Top navigation
+       ============================================================ */
+    .site-nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--nav-height);
+      background: rgba(255, 255, 255, 0.97);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(6px);
+      z-index: 1000;
+    }
+    .nav-inner {
+      max-width: var(--max-width);
+      height: 100%;
+      margin: 0 auto;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    /* Logo + lab name — to replace logo: update src="Doc/LOGO.png" on the <img> tag */
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      text-decoration: none;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .brand-logo { height: 42px; width: auto; object-fit: contain; }
+    .brand-text {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.01em;
+    }
+    .brand:hover .brand-text { color: var(--accent); }
+    .brand:hover { text-decoration: none; }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .nav-links button {
+      padding: 7px 13px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-light);
+      border-radius: 6px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: color 0.15s, background 0.15s;
+    }
+    .nav-links button:hover,
+    .nav-links button.active {
+      color: var(--navy);
+      background: var(--card-bg);
+    }
+
+    .nav-toggle {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 1.3rem;
+      color: var(--text);
+      cursor: pointer;
+      padding: 6px 10px;
+    }
+
+    /* ============================================================
+       Page views — only one shown at a time
+       ============================================================ */
+    .page-view { display: none; }
+    .page-view.active { display: block; }
+
+    /* ============================================================
+       HOME view
+       ============================================================ */
+
+    /* Carousel
+       To add a slide  : copy a .carousel-slide block, update img src and caption.
+       To remove a slide: delete the .carousel-slide block.
+       Interval: change the 5000 ms value in the script.             */
+    .carousel-wrap {
+      margin-top: var(--nav-height);
+      position: relative;
+      width: 100%;
+      height: 490px;
+      overflow: hidden;
+      background: #111;
+    }
+    .carousel-track { position: relative; width: 100%; height: 100%; }
+    .carousel-slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 1.1s ease-in-out;
+    }
+    .carousel-slide.active { opacity: 1; }
+    .carousel-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .carousel-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(10,20,50,0.08) 0%, rgba(10,20,50,0.55) 100%);
+    }
+    .carousel-caption {
+      position: absolute;
+      bottom: 68px; left: 0; right: 0;
+      text-align: center;
+      color: #fff;
+      padding: 0 48px;
+      pointer-events: none;
+    }
+    .carousel-caption h2 {
+      margin: 0 0 6px;
+      font-size: 2.1rem;
+      font-weight: 800;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.45);
+      letter-spacing: -0.02em;
+    }
+    .carousel-caption p {
+      margin: 0;
+      font-size: 1.05rem;
+      opacity: 0.92;
+      text-shadow: 0 1px 5px rgba(0,0,0,0.35);
+    }
+    .carousel-dots {
+      position: absolute;
+      bottom: 22px; left: 0; right: 0;
+      display: flex; justify-content: center; gap: 8px;
+    }
+    .carousel-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.45);
+      border: none; cursor: pointer; padding: 0;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .carousel-dot.active { background: #fff; transform: scale(1.35); }
+    .carousel-btn {
+      position: absolute;
+      top: 50%; transform: translateY(-50%);
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(4px);
+      border: none; color: #fff;
+      font-size: 1.2rem;
+      width: 46px; height: 46px;
+      border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 10; transition: background 0.2s;
+    }
+    .carousel-btn:hover { background: rgba(255,255,255,0.3); }
+    .carousel-btn.prev { left: 20px; }
+    .carousel-btn.next { right: 20px; }
+
+    /* Welcome + mini-news grid */
+    .home-body {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 50px 28px 80px;
+      display: grid;
+      grid-template-columns: 1fr 310px;
+      gap: 52px;
+      align-items: start;
+    }
+    .vista-tagline {
+      font-size: 1.12rem;
+      font-weight: 600;
+      color: var(--navy);
+      margin: 0 0 20px;
+    }
+    .vista-tagline .vl { color: var(--navy); font-weight: 800; }
+    .welcome-body { font-size: 0.96rem; color: var(--text); }
+    .welcome-body p { margin-bottom: 1em; text-align: justify; }
+
+    /* Mini news sidebar */
+    .news-sidebar { border-top: 3px solid var(--navy); padding-top: 18px; }
+    .news-sidebar-title {
+      font-size: 0.78rem; font-weight: 700;
+      color: var(--navy); text-transform: uppercase;
+      letter-spacing: 0.1em; margin: 0 0 14px;
+    }
+    .snews-item { padding: 11px 0; border-bottom: 1px solid var(--border); }
+    .snews-item:last-of-type { border-bottom: none; }
+    .snews-date { font-size: 0.78rem; font-weight: 600; color: var(--muted); margin-bottom: 3px; }
+    .snews-text { font-size: 0.86rem; color: var(--text-light); line-height: 1.5; margin: 0; }
+    .see-all {
+      display: inline-block; margin-top: 14px;
+      font-size: 0.84rem; font-weight: 600; color: var(--accent); cursor: pointer;
+    }
+    .see-all:hover { color: var(--accent-dark); text-decoration: underline; }
+
+    /* ============================================================
+       Inner pages (News, People, Research, Join Us)
+       ============================================================ */
+    .inner-page {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: calc(var(--nav-height) + 48px) 28px 80px;
+    }
+    .page-title {
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--navy);
+      margin: 0 0 10px;
+      letter-spacing: -0.02em;
+    }
+    .page-divider {
+      width: 44px; height: 3px;
+      background: var(--navy);
+      border-radius: 2px;
+      margin: 0 0 36px;
+    }
+
+    /* News page */
+    .news-list .news-row {
+      display: grid;
+      grid-template-columns: 100px 1fr;
+      gap: 18px;
+      padding: 15px 0;
+      border-bottom: 1px solid var(--border);
+      align-items: start;
+    }
+    .news-list .news-row:first-child { border-top: 1px solid var(--border); }
+    .news-row-date { font-size: 0.84rem; font-weight: 600; color: var(--muted); padding-top: 1px; }
+    .news-row-text { font-size: 0.92rem; color: var(--text); margin: 0; line-height: 1.6; }
+
+    /* People page */
+    .people-subhead {
+      font-size: 0.78rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.09em;
+      color: var(--muted); margin: 0 0 18px;
+    }
+    .people-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 28px;
+      margin-bottom: 44px;
+    }
+    .person-card { text-align: center; }
+    .person-photo {
+      width: 110px; height: 110px;
+      border-radius: 50%; object-fit: cover;
+      border: 3px solid var(--border);
+      margin: 0 auto 10px; display: block;
+    }
+    .person-placeholder {
+      width: 110px; height: 110px;
+      border-radius: 50%; background: var(--card-bg);
+      border: 3px solid var(--border);
+      margin: 0 auto 10px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--border); font-size: 2.4rem;
+    }
+    .person-name { font-weight: 600; font-size: 0.91rem; color: var(--text); margin: 0 0 2px; }
+    .person-role { font-size: 0.81rem; color: var(--muted); margin: 0; }
+
+    /* Research page */
+    .research-intro { max-width: 100%; color: var(--text-light); font-size: 0.95rem; margin-bottom: 36px; text-align: justify; }
+
+    /* Research directions */
+    .rd-block {
+      border-left: 4px solid var(--navy);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      background: var(--card-bg);
+      border-radius: 0 10px 10px 0;
+    }
+    .rd-block:last-child { margin-bottom: 0; }
+    .rd-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin: 0 0 8px;
+    }
+    .rd-summary {
+      font-size: 0.93rem;
+      color: var(--text);
+      margin: 0 0 12px;
+      text-align: justify;
+    }
+    .rd-detail {
+      font-size: 0.91rem;
+      color: var(--text-light);
+      line-height: 1.7;
+      text-align: justify;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+      margin-top: 4px;
+    }
+    .rd-detail p { margin: 0 0 10px; }
+    .rd-detail p:last-child { margin-bottom: 0; }
+    .rd-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--accent);
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+      font-family: inherit;
+      margin-top: 2px;
+    }
+    .rd-toggle:hover { color: var(--accent-dark); }
+    .rd-toggle .arrow { font-size: 0.7rem; transition: transform 0.2s; }
+    .rd-toggle.open .arrow { transform: rotate(180deg); }
+    .rd-detail { display: none; }
+    .rd-detail.open { display: block; }
+
+    /* Join Us page */
+    .join-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-left: 5px solid var(--navy);
+      border-radius: 0 10px 10px 0;
+      padding: 30px 34px;
+      max-width: 700px;
+    }
+    .join-box p { font-size: 0.94rem; }
+    .join-box p:last-of-type { margin-bottom: 16px; }
+    .email-btn {
+      display: inline-flex; align-items: center; gap: 9px;
+      padding: 10px 22px;
+      background: var(--navy); color: #fff !important;
+      border-radius: 7px; font-weight: 600; font-size: 0.9rem;
+      transition: background 0.2s; text-decoration: none !important;
+    }
+    .email-btn:hover { background: var(--navy-light); }
+
+    /* ============================================================
+       Footer
+       ============================================================ */
+    .site-footer {
+      background: var(--navy);
+      color: rgba(255,255,255,0.7);
+      text-align: center;
+      padding: 22px 24px;
+      font-size: 0.84rem;
+    }
+    .site-footer a { color: rgba(255,255,255,0.85); }
+    .site-footer a:hover { color: #fff; text-decoration: underline; }
+
+    /* ============================================================
+       Responsive
+       ============================================================ */
+    @media (max-width: 860px) {
+      .home-body { grid-template-columns: 1fr; gap: 36px; }
+      .news-sidebar { border-top: 1px solid var(--border); padding-top: 24px; }
+      .carousel-wrap { height: 360px; }
+      .carousel-caption h2 { font-size: 1.55rem; }
+    }
+    @media (max-width: 600px) {
+      .nav-links { display: none; flex-direction: column; background: #fff; }
+      .nav-links.open {
+        display: flex;
+        position: absolute; top: var(--nav-height); left: 0; right: 0;
+        border-bottom: 1px solid var(--border);
+        padding: 10px 0; gap: 0; z-index: 999;
+      }
+      .nav-links.open button { border-radius: 0; padding: 11px 24px; width: 100%; text-align: left; }
+      .nav-toggle { display: block; }
+      .carousel-wrap { height: 260px; }
+      .carousel-caption { bottom: 44px; }
+      .carousel-caption h2 { font-size: 1.2rem; }
+      .carousel-caption p { font-size: 0.88rem; }
+      .brand-text { font-size: 1rem; }
+      .brand-logo { height: 34px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ======================= Top navigation ======================= -->
+  <header class="site-nav">
+    <div class="nav-inner">
+      <!-- Logo: to replace, update src="Doc/LOGO.png" below -->
+      <a class="brand" onclick="showView('home')" role="button" tabindex="0">
+        <img class="brand-logo" src="Doc/LOGO.png" alt="VISTA Lab Logo">
+        <span class="brand-text">VISTA Lab</span>
+      </a>
+
+      <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <nav class="nav-links" id="nav-links">
+        <button onclick="showView('home')"     data-view="home"     class="active">Home</button>
+        <button onclick="showView('news')"     data-view="news">News</button>
+        <button onclick="showView('people')"   data-view="people">People</button>
+        <button onclick="showView('research')" data-view="research">Research</button>
+        <button onclick="showView('join')"     data-view="join">Join Us</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       HOME view
+       ===================================================================== -->
+  <div id="view-home" class="page-view active">
+
+    <!-- Carousel / Slideshow
+         To add a slide  : copy a .carousel-slide block and update img src + caption.
+         To remove a slide: delete the .carousel-slide block.
+         Slide interval  : change the 5000 ms value in the script.              -->
+    <div class="carousel-wrap">
+      <div class="carousel-track" id="carouselTrack">
+
+        <!-- Slide 1 -->
+        <div class="carousel-slide active">
+          <img src="Doc/Fall_Campus.jpg" alt="USU Campus in fall">
+          <div class="carousel-overlay"></div>
+          <div class="carousel-caption">
+            <h2>VISTA Lab</h2>
+            <p>Visual Intelligence Systems for Trustworthy AI</p>
+          </div>
+        </div>
+
+        <!-- Slide 2 -->
+        <div class="carousel-slide">
+          <img src="Doc/Logan Canyon.jpg" alt="Logan Canyon">
+          <div class="carousel-overlay"></div>
+          <div class="carousel-caption">
+            <h2>Logan Canyon</h2>
+            <p>VISTA Lab develops AI that sees broadly, reasons deeply, and acts reliably</p>
+          </div>
+        </div>
+
+        <!-- Add more slides here -->
+
+      </div>
+
+      <button class="carousel-btn prev" onclick="carouselMove(-1)" aria-label="Previous slide">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      <button class="carousel-btn next" onclick="carouselMove(1)" aria-label="Next slide">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+      <div class="carousel-dots" id="carouselDots"></div>
+    </div>
+
+    <!-- Welcome + mini news -->
+    <div class="home-body">
+
+      <!-- Welcome text -->
+      <div class="welcome-body">
+        <p class="vista-tagline">
+          <span class="vl">V</span>isual&nbsp;<span class="vl">I</span>ntelligence&nbsp;<span class="vl">S</span>ystems&nbsp;for&nbsp;<span class="vl">T</span>rustworthy&nbsp;<span class="vl">A</span>I
+        </p>
+        <p>
+          The name <strong>VISTA</strong> evokes a broad and inspiring view of the world. It naturally connects to vision, perception, and deeper visual understanding. Inspired by the landscapes of Logan Canyon, VISTA Lab develops trustworthy visual and multimodal AI systems that can perceive, reason, and generalize across complex real-world environments.
+        </p>
+        <p>
+          Our research spans foundation models for perception and reasoning, biometrics, anomaly detection, digital forensics, healthcare AI, and autonomous driving. We are committed to advancing AI that is not only powerful, but also robust, interpretable, and aligned with human values.
+        </p>
+        <p>
+          VISTA Lab is part of the <a href="https://engineering.usu.edu/cs/" target="_blank" rel="noopener noreferrer">School of Computing</a> at <a href="https://www.usu.edu/" target="_blank" rel="noopener noreferrer">Utah State University</a>, directed by <a href="https://kashiani.github.io/" target="_blank" rel="noopener noreferrer">Dr. Hossein Kashiani</a>.
+        </p>
+      </div>
+
+      <!-- Mini news sidebar -->
+      <div class="news-sidebar">
+        <p class="news-sidebar-title">Recent News</p>
+        <div class="snews-item">
+          <div class="snews-date">May 2026</div>
+          <p class="snews-text">VISTA Lab officially launches at Utah State University.</p>
+        </div>
+        <!-- Add future news items here -->
+        <span class="see-all" onclick="showView('news')">See all news →</span>
+      </div>
+
+    </div>
+  </div><!-- /#view-home -->
+
+  <!-- =====================================================================
+       NEWS view
+       ===================================================================== -->
+  <div id="view-news" class="page-view">
+    <div class="inner-page">
+      <h2 class="page-title">News</h2>
+      <div class="page-divider"></div>
+      <div class="news-list">
+        <div class="news-row">
+          <div class="news-row-date">May 2026</div>
+          <p class="news-row-text">VISTA Lab officially launches at Utah State University. We are actively recruiting motivated Ph.D. and Master's students!</p>
+        </div>
+        <!-- Add future news rows here -->
+      </div>
+    </div>
+  </div><!-- /#view-news -->
+
+  <!-- =====================================================================
+       PEOPLE view
+       ===================================================================== -->
+  <div id="view-people" class="page-view">
+    <div class="inner-page">
+      <h2 class="page-title">People</h2>
+      <div class="page-divider"></div>
+
+      <p class="people-subhead">Principal Investigator</p>
+      <div class="people-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 200px)); margin-bottom: 44px;">
+        <div class="person-card">
+          <img class="person-photo" src="Doc/photohkashia.png" alt="Hossein Kashiani">
+          <div class="person-name"><a href="https://kashiani.github.io/" target="_blank" rel="noopener noreferrer">Hossein Kashiani</a></div>
+          <p class="person-role">Assistant Professor</p>
+        </div>
+      </div>
+
+      <p class="people-subhead">Graduate Students</p>
+      <div class="people-grid" style="margin-bottom: 44px;">
+        <div class="person-card">
+          <div class="person-placeholder"><i class="fa-solid fa-user"></i></div>
+          <div class="person-name">Recruiting</div>
+          <p class="person-role">Ph.D. Student</p>
+        </div>
+        <div class="person-card">
+          <div class="person-placeholder"><i class="fa-solid fa-user"></i></div>
+          <div class="person-name">Recruiting</div>
+          <p class="person-role">Ph.D. Student</p>
+        </div>
+        <div class="person-card">
+          <div class="person-placeholder"><i class="fa-solid fa-user"></i></div>
+          <div class="person-name">Recruiting</div>
+          <p class="person-role">M.S. Student</p>
+        </div>
+      </div>
+
+      <p class="people-subhead">Undergraduate Students</p>
+      <div class="people-grid">
+        <div class="person-card">
+          <div class="person-placeholder"><i class="fa-solid fa-user"></i></div>
+          <div class="person-name">Recruiting</div>
+          <p class="person-role">Undergraduate Researcher</p>
+        </div>
+      </div>
+    </div>
+  </div><!-- /#view-people -->
+
+  <!-- =====================================================================
+       RESEARCH view
+       ===================================================================== -->
+  <div id="view-research" class="page-view">
+    <div class="inner-page">
+      <h2 class="page-title">Research</h2>
+      <div class="page-divider"></div>
+      <p class="research-intro">
+        VISTA Lab pursues research at the intersection of computer vision, multimodal AI, and trustworthy systems. Our goal is to build AI that is not only powerful, but also robust, interpretable, and safe for real-world deployment. Our work is organized around three complementary directions.
+      </p>
+
+      <!-- Direction 1 -->
+      <div class="rd-block">
+        <h3 class="rd-title">Foundation Models for Perception, Reasoning, and Action</h3>
+        <p class="rd-summary">
+          Developing foundation models that support robust perception, adaptive reasoning, memory, uncertainty, and continual learning.
+        </p>
+        <div class="rd-detail open">
+          <p>
+            This direction develops VLMs and MLLMs for robust perception, efficient adaptation, and trustworthy deployment, including multimodal in-context learning, prompt learning, test-time adaptation, and evidence-grounded and uncertainty-aware reasoning. Representative works include <a href="https://arxiv.org/abs/2606.04434" target="_blank" rel="noopener noreferrer">Hyper-ICL</a>, <a href="https://arxiv.org/abs/2505.19373" target="_blank" rel="noopener noreferrer">DiSa</a>, and <a href="https://arxiv.org/abs/2411.16018" target="_blank" rel="noopener noreferrer">Style-Pro</a>.
+          </p>
+          <p>
+            Future directions include memory-augmented VLMs for long-horizon reasoning, physical-space reasoning, vision-language-action foundation models, closed-loop multimodal systems, test-time multimodal adaptation, and continual multimodal learning.
+          </p>
+        </div>
+      </div>
+
+      <!-- Direction 2 -->
+      <div class="rd-block">
+        <h3 class="rd-title">Trustworthy AI</h3>
+        <p class="rd-summary">
+          Building large-scale intelligent systems that are robust, efficient, and interpretable for real-world deployment.
+        </p>
+        <div class="rd-detail open">
+          <p>
+            This direction develops machine learning and multimodal AI techniques to <a href="https://ieeexplore.ieee.org/abstract/document/10007929/" target="_blank" rel="noopener noreferrer">safeguard identity</a> and <a href="https://openaccess.thecvf.com/content/CVPR2025/html/Kashiani_FreqDebias_Towards_Generalizable_Deepfake_Detection_via_Consistency-Driven_Frequency_Debiasing_CVPR_2025_paper.html" target="_blank" rel="noopener noreferrer">digital trust</a>, advance <a href="https://ieeexplore.ieee.org/abstract/document/10380201/" target="_blank" rel="noopener noreferrer">long-range biometric recognition</a>, and address multimodal safety, hallucination reduction, fairness-aware and privacy-preserving learning, and adversarial robustness.
+          </p>
+        </div>
+      </div>
+
+      <!-- Direction 3 -->
+      <div class="rd-block">
+        <h3 class="rd-title">AI for Healthcare, Manufacturing &amp; Autonomous Driving</h3>
+        <p class="rd-summary">
+          Applying AI innovations to solve real-world challenges in healthcare, advanced manufacturing, autonomous driving, and beyond.
+        </p>
+        <div class="rd-detail open">
+          <p>
+            This direction leverages machine learning and multimodal AI to address critical challenges in healthcare, including <a href="https://arxiv.org/pdf/2302.09462" target="_blank" rel="noopener noreferrer">MedViT</a> for robust medical imaging; advanced manufacturing, including <a href="https://arxiv.org/abs/2411.16049" target="_blank" rel="noopener noreferrer">ROADS</a> and <a href="https://arxiv.org/abs/2601.22492" target="_blank" rel="noopener noreferrer">PromptMAD</a> for industrial anomaly detection and quality control; and autonomous driving, including <a href="https://www.sciencedirect.com/science/article/pii/S0957417421008368" target="_blank" rel="noopener noreferrer">robust perception</a>, <a href="https://www.sciencedirect.com/science/article/pii/S0262885619300113" target="_blank" rel="noopener noreferrer">tracking</a>, <a href="https://ieeexplore.ieee.org/iel7/6287639/9312710/09522137.pdf" target="_blank" rel="noopener noreferrer">multi-teacher knowledge distillation</a>, and risk-aware driving policies.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /#view-research -->
+
+  <!-- =====================================================================
+       JOIN US view
+       ===================================================================== -->
+  <div id="view-join" class="page-view">
+    <div class="inner-page">
+      <h2 class="page-title">Join Us</h2>
+      <div class="page-divider"></div>
+      <div class="join-box">
+        <p>
+          <strong>VISTA Lab is actively recruiting motivated Ph.D., Master's, and undergraduate students</strong> passionate about computer vision, multimodal AI, and trustworthy machine learning.
+        </p>
+        <p>
+          If you are interested in joining, please read <a href="https://kashiani.github.io/" target="_blank" rel="noopener noreferrer">Dr. Kashiani's homepage</a> and send an email with your CV, transcripts, and a brief statement describing your research interests and background.
+        </p>
+        <a class="email-btn" href="mailto:hossein.kashiani@usu.edu">
+          <i class="fa-solid fa-envelope"></i>
+          hossein.kashiani@usu.edu
+        </a>
+      </div>
+    </div>
+  </div><!-- /#view-join -->
+
+  <!-- ======================= Footer ======================= -->
+  <footer class="site-footer">
+    Copyright &copy; 2026 VISTA Lab
+  </footer>
+
+  <!-- ======================= Scripts ======================= -->
+  <script>
+    /* ------------------------------------------------------------------ */
+    /* Research direction toggle                                            */
+    /* ------------------------------------------------------------------ */
+    function toggleRD(btn) {
+      var detail = btn.nextElementSibling;
+      var open = detail.classList.toggle('open');
+      btn.classList.toggle('open', open);
+      btn.setAttribute('aria-expanded', open);
+      btn.childNodes[0].nodeValue = open ? 'Hide details ' : 'Show details ';
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Tab / view switcher                                                  */
+    /* ------------------------------------------------------------------ */
+    function showView(id) {
+      // Hide all views
+      document.querySelectorAll('.page-view').forEach(function (v) {
+        v.classList.remove('active');
+      });
+      // Show target
+      var target = document.getElementById('view-' + id);
+      if (target) target.classList.add('active');
+
+      // Update nav button active state
+      document.querySelectorAll('.nav-links button[data-view]').forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-view') === id);
+      });
+
+      // Update hash for bookmarkability
+      history.replaceState(null, '', '#' + id);
+
+      // Close mobile menu
+      var nav = document.getElementById('nav-links');
+      if (nav) nav.classList.remove('open');
+
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+
+    // Load view from hash on page load
+    (function () {
+      var hash = (window.location.hash || '#home').replace('#', '');
+      var valid = ['home', 'news', 'people', 'research', 'join'];
+      showView(valid.indexOf(hash) !== -1 ? hash : 'home');
+    })();
+
+    /* ------------------------------------------------------------------ */
+    /* Carousel                                                             */
+    /* ------------------------------------------------------------------ */
+    (function () {
+      var slides     = document.querySelectorAll('.carousel-slide');
+      var dotsWrap   = document.getElementById('carouselDots');
+      var current    = 0;
+      var autoTimer;
+
+      // Build dot buttons
+      slides.forEach(function (_, i) {
+        var dot = document.createElement('button');
+        dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+        dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+        dot.addEventListener('click', function () { goTo(i); resetAuto(); });
+        dotsWrap.appendChild(dot);
+      });
+
+      function getDots() { return document.querySelectorAll('.carousel-dot'); }
+
+      function goTo(n) {
+        slides[current].classList.remove('active');
+        getDots()[current].classList.remove('active');
+        current = (n + slides.length) % slides.length;
+        slides[current].classList.add('active');
+        getDots()[current].classList.add('active');
+      }
+
+      window.carouselMove = function (dir) { goTo(current + dir); resetAuto(); };
+
+      function resetAuto() {
+        clearInterval(autoTimer);
+        autoTimer = setInterval(function () { goTo(current + 1); }, 5000);
+      }
+
+      autoTimer = setInterval(function () { goTo(current + 1); }, 5000);
+    })();
+
+    /* ------------------------------------------------------------------ */
+    /* Mobile nav toggle                                                    */
+    /* ------------------------------------------------------------------ */
+    (function () {
+      var toggle = document.querySelector('.nav-toggle');
+      var nav    = document.getElementById('nav-links');
+      if (!toggle || !nav) return;
+      toggle.addEventListener('click', function () {
+        var open = nav.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', open);
+      });
+    })();
+  </script>
+
+</body>
+</html>
